@@ -10,9 +10,14 @@ const SearchExercises = ({ setExercises, bodyPart, setBodyPart }) => {
 
   useEffect(() => {
     const fetchExercisesData = async () => {
-      const bodyPartsData = await fetchData('https://exercisedb.p.rapidapi.com/exercises/targetList', exerciseOptions);
+      try {
+        const bodyPartsData = await fetchData('https://exercisedb.p.rapidapi.com/exercises/bodyPartList', exerciseOptions);
 
-      setBodyParts(['all', ...bodyPartsData]);
+        setBodyParts(['all', ...(Array.isArray(bodyPartsData) ? bodyPartsData : [])]);
+      } catch (error) {
+        console.error('Error fetching body parts:', error);
+        setBodyParts(['all']);
+      }
     };
 
     fetchExercisesData();
@@ -20,27 +25,25 @@ const SearchExercises = ({ setExercises, bodyPart, setBodyPart }) => {
 
   const handleSearch = async () => {
     if (search) {
-      const exercisesData = await fetchData('https://exercisedb.p.rapidapi.com/exercises', exerciseOptions);
-       console.log("heelo ")
-       console.log(exercisesData,"result");
-const searchedExercises = exercisesData.filter(
-  (item) =>
-    item.name.toLowerCase().includes(search.toLowerCase()) ||
-    item.target.toLowerCase().includes(search.toLowerCase()) ||
-    item.equipment.toLowerCase().includes(search.toLowerCase()) ||
-    item.bodyPart.toLowerCase().includes(search.toLowerCase())
-);
-console.log("Search term:", search);
+      try {
+        const exercisesData = await fetchData('https://exercisedb.p.rapidapi.com/exercises', exerciseOptions);
 
+        const searchedExercises = Array.isArray(exercisesData) ? exercisesData.filter(
+          (item) => item.name?.toLowerCase().includes(search)
+                 || item.target?.toLowerCase().includes(search)
+                 || item.equipment?.toLowerCase().includes(search)
+                 || item.bodyPart?.toLowerCase().includes(search),
+        ) : [];
 
+        window.scrollTo({ top: 1800, left: 100, behavior: 'smooth' });
 
-      window.scrollTo({ top: 1800, left: 100, behavior: 'smooth' });
-
-      setSearch('');
-      console.log("Searched Exercises:", searchedExercises);
-      setExercises(searchedExercises);
+        setSearch('');
+        setExercises(searchedExercises);
+      } catch (error) {
+        console.error('Error searching exercises:', error);
+        setExercises([]);
+      }
     }
-   
   };
 
   return (
@@ -57,7 +60,7 @@ console.log("Search term:", search);
           placeholder="Search Exercises"
           type="text"
         />
-        <Button className="search-btn" sx={{ bgcolor: '#FF2625', color: '#fff', textTransform: 'none', width: { lg: '173px', xs: '80px' }, height: '56px', position: 'absolute', right: '0px', fontSize: { lg: '20px', xs: '14px' } }} onClick={()=>handleSearch()}>
+        <Button className="search-btn" sx={{ bgcolor: '#FF2625', color: '#fff', textTransform: 'none', width: { lg: '173px', xs: '80px' }, height: '56px', position: 'absolute', right: '0px', fontSize: { lg: '20px', xs: '14px' } }} onClick={handleSearch}>
           Search
         </Button>
       </Box>
